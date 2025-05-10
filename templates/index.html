@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2D3748;
+            --primary-light: #4A5568;
+            --accent-color: #3182CE;
+            --accent-hover: #2C5282;
+            --error-color: #E53E3E;
+            --success-color: #38A169;
+            --text-color: #1A202C;
+            --text-light: #718096;
+            --bg-color: #F7FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --code-bg: #F8FAFC;
+            --code-border: #E2E8F0;
+            --message-bg: #F7FAFC;
+            --user-message-bg: #EBF8FF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: var(--card-bg);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            background-color: var(--message-bg);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .user-message {
+            background-color: var(--user-message-bg);
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .message-text {
+            color: var(--text-color);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .message-text p {
+            margin: 0 0 16px 0;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        /* Code block styling */
+        .code-block {
+            background-color: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background-color: var(--code-bg);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--code-border);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .code-language {
+            font-weight: 500;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .copy-button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .copy-button:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .code-content {
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .code-content pre {
+            margin: 0;
+        }
+
+        .code-content code {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .input-container {
+            background-color: var(--card-bg);
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            bottom: 0;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex-grow: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            min-height: 24px;
+            max-height: 200px;
+            transition: all 0.2s;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.1);
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .send-button {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .send-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .mic-button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+        }
+
+        .mic-button:hover {
+            background-color: var(--bg-color);
+        }
+
+        .mic-button.recording {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        .reset-button {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .reset-button:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .play-button {
+            background-color: var(--success-color);
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+            margin-left: 8px;
+            border-radius: 6px;
+        }
+
+        .play-button:hover {
+            opacity: 0.9;
+        }
+
+        .play-button.playing {
+            background-color: var(--error-color);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .status {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: var(--success-color);
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .status.error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+
+        .input-hint {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* Inline code styling */
+        .message-text code {
+            background-color: var(--code-bg);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Assistant</h1>
+        </div>
+        <div class="status" id="status">Checking system status...</div>
+        <div class="chat-container" id="chatContainer"></div>
+        <div class="input-container">
+            <div class="input-wrapper">
+                <input type="text" id="messageInput" placeholder="Type your message or use voice...">
+                <button id="micButton" class="mic-button" title="Hold to record">🎤</button>
+                <button id="sendButton" class="send-button">Send</button>
+                <button id="resetButton" class="reset-button">Reset</button>
+            </div>
+            <div class="input-hint">
+                Press Enter to send message • Hold microphone button to record voice
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let statusCheckInterval;
+        let currentAudio = null;
+
+        // Check system status
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                const statusElement = document.getElementById('status');
+                
+                if (data.ollama_status === 'running') {
+                    statusElement.textContent = 'System is ready';
+                    statusElement.className = 'status';
+                    setTimeout(() => {
+                        statusElement.style.opacity = '0';
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 300);
+                    }, 2000);
+                } else {
+                    statusElement.textContent = 'Waiting for Ollama to start...';
+                    statusElement.className = 'status';
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }
+
+        // Initialize voice recording
+        async function initVoiceRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob);
+                    
+                    try {
+                        const response = await fetch('/speech-to-text', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            document.getElementById('messageInput').value = data.text;
+                            sendMessage(data.text);
+                        } else {
+                            addMessage(data.error, 'error');
+                        }
+                    } catch (error) {
+                        addMessage('Error processing speech: ' + error.message, 'error');
+                    }
+                    
+                    audioChunks = [];
+                };
+                
+                return true;
+            } catch (error) {
+                addMessage('Error accessing microphone: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Send message
+        async function sendMessage(text) {
+            if (!text.trim()) return;
+            
+            addMessage(text, 'user');
+            document.getElementById('messageInput').value = '';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: text })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage(data.response, 'assistant', data.audio);
+                } else {
+                    addMessage(data.error, 'error');
+                }
+            } catch (error) {
+                addMessage('Error sending message: ' + error.message, 'error');
+            }
+        }
+
+        // Detect code blocks in text
+        function detectCodeBlocks(text) {
+            const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+            const parts = [];
+            let lastIndex = 0;
+            let match;
+
+            while ((match = codeBlockRegex.exec(text)) !== null) {
+                // Add text before code block
+                if (match.index > lastIndex) {
+                    parts.push({
+                        type: 'text',
+                        content: text.slice(lastIndex, match.index)
+                    });
+                }
+
+                // Add code block
+                parts.push({
+                    type: 'code',
+                    language: match[1] || 'plaintext',
+                    content: match[2].trim()
+                });
+
+                lastIndex = match.index + match[0].length;
+            }
+
+            // Add remaining text
+            if (lastIndex < text.length) {
+                parts.push({
+                    type: 'text',
+                    content: text.slice(lastIndex)
+                });
+            }
+
+            return parts;
+        }
+
+        // Copy code to clipboard
+        async function copyCodeToClipboard(code) {
+            try {
+                await navigator.clipboard.writeText(code);
+                return true;
+            } catch (error) {
+                console.error('Failed to copy code:', error);
+                return false;
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, type, audioData = null) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = type === 'user' ? '👤' : '🤖';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+
+            // Process text for code blocks
+            const parts = detectCodeBlocks(text);
+            parts.forEach(part => {
+                if (part.type === 'text') {
+                    // Convert newlines to paragraphs
+                    const paragraphs = part.content.split('\n\n');
+                    paragraphs.forEach((paragraph, index) => {
+                        if (paragraph.trim()) {
+                            const p = document.createElement('p');
+                            p.textContent = paragraph;
+                            textDiv.appendChild(p);
+                        }
+                    });
+                } else {
+                    const codeBlock = document.createElement('div');
+                    codeBlock.className = 'code-block';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'code-header';
+                    
+                    const language = document.createElement('span');
+                    language.className = 'code-language';
+                    language.textContent = part.language;
+                    
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-button';
+                    copyButton.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+                    copyButton.onclick = async () => {
+                        const success = await copyCodeToClipboard(part.content);
+                        copyButton.innerHTML = success ? 
+                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!' : 
+                            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Failed';
+                        setTimeout(() => {
+                            copyButton.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+                        }, 2000);
+                    };
+                    
+                    header.appendChild(language);
+                    header.appendChild(copyButton);
+                    
+                    const content = document.createElement('div');
+                    content.className = 'code-content';
+                    const pre = document.createElement('pre');
+                    const code = document.createElement('code');
+                    code.className = `language-${part.language}`;
+                    code.textContent = part.content;
+                    pre.appendChild(code);
+                    content.appendChild(pre);
+                    
+                    codeBlock.appendChild(header);
+                    codeBlock.appendChild(content);
+                    textDiv.appendChild(codeBlock);
+                }
+            });
+            
+            messageContent.appendChild(textDiv);
+            
+            if (audioData && type === 'assistant') {
+                const playButton = document.createElement('button');
+                playButton.className = 'play-button';
+                playButton.innerHTML = '🔊';
+                playButton.title = 'Play audio';
+                playButton.onclick = () => {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio = null;
+                        playButton.innerHTML = '🔊';
+                        playButton.classList.remove('playing');
+                    } else {
+                        currentAudio = new Audio('data:audio/wav;base64,' + audioData);
+                        currentAudio.onended = () => {
+                            currentAudio = null;
+                            playButton.innerHTML = '🔊';
+                            playButton.classList.remove('playing');
+                        };
+                        currentAudio.play().catch(error => {
+                            console.error('Error playing audio:', error);
+                        });
+                        playButton.innerHTML = '⏹';
+                        playButton.classList.add('playing');
+                    }
+                };
+                messageContent.appendChild(playButton);
+            }
+            
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            messageDiv.appendChild(timestamp);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Apply syntax highlighting to code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+
+        // Reset chat
+        async function resetChat() {
+            try {
+                await fetch('/reset', { method: 'POST' });
+                document.getElementById('chatContainer').innerHTML = '';
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+            } catch (error) {
+                addMessage('Error resetting chat: ' + error.message, 'error');
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const micButton = document.getElementById('micButton');
+            const sendButton = document.getElementById('sendButton');
+            const resetButton = document.getElementById('resetButton');
+            const messageInput = document.getElementById('messageInput');
+            
+            // Start status check
+            statusCheckInterval = setInterval(checkStatus, 5000);
+            checkStatus();
+            
+            // Initialize voice recording
+            initVoiceRecording();
+            
+            // Microphone button
+            micButton.addEventListener('mousedown', async () => {
+                if (!mediaRecorder) {
+                    const success = await initVoiceRecording();
+                    if (!success) return;
+                }
+                
+                isRecording = true;
+                micButton.classList.add('recording');
+                audioChunks = [];
+                mediaRecorder.start();
+            });
+            
+            micButton.addEventListener('mouseup', () => {
+                if (isRecording) {
+                    isRecording = false;
+                    micButton.classList.remove('recording');
+                    mediaRecorder.stop();
+                }
+            });
+            
+            micButton.addEventListener('mouseleave', () => {
+                if (isRecording) {
+                    isRecording = false;
+                    micButton.classList.remove('recording');
+                    mediaRecorder.stop();
+                }
+            });
+            
+            // Send button
+            sendButton.addEventListener('click', () => {
+                const text = messageInput.value.trim();
+                if (text) {
+                    sendMessage(text);
+                }
+            });
+            
+            // Enter key
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const text = messageInput.value.trim();
+                    if (text) {
+                        sendMessage(text);
+                    }
+                }
+            });
+            
+            // Reset button
+            resetButton.addEventListener('click', resetChat);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,8 @@
+mlflow==2.10.2
+flask==3.0.2
+requests==2.31.0
+python-dotenv==1.0.1
+setuptools>=65.5.1
+SpeechRecognition==3.10.1
+pyttsx3==2.90
+pyaudio==0.2.14 
